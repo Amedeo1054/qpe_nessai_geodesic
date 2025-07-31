@@ -2,7 +2,24 @@ import numpy as np, cupy as cp, os, sys, ast
 import kerrgeopy as kg
 from pn_trajectory import trajectory
 
-def timings(windows, logMbh, sma, ecc, incl, a, theta_d, theta_obs, )
+def Risco_Rg(spin_a):
+	Z1 = 1 + (1-spin_a*spin_a)**(1./3.)*((1+spin_a)**(1./3.)+(1-spin_a)**(1./3.))
+	Z2 = np.sqrt(3.*spin_a*spin_a+Z1*Z1)
+	return 3 + Z2 - np.sqrt((3-Z1)*(3+Z1+2*Z2))
+
+def lense_thirring_prec_freq(M, spin_a, p):
+  Rg = G*M/c**2
+	Rin = Risco_Rg(spin_a)*Rg
+	Rout = 3*94.*(M/1e6)**(-2./3.)*Rg
+	R_array = np.linspace(Rin, Rout, 1024, endpoint=False)
+	L = lambda R : R**-p*(1.-np.sqrt(Rin/R))**p * np.sqrt(G*M*R)
+	Omega_Lt = lambda R : 0.5*c**3 / (G*M) / ((R/Rg)**1.5+spin_a) * (4*spin_a*((R/Rg)**-1.5) - 3*(spin_a**2.)*((R/Rg)**-2.)) # [Hz]
+	Int_top = lambda R : Omega_Lt(R) * L(R) * 2.*np.pi * R
+	Int_bottom = lambda R : L(R) * 2.*np.pi * R
+	Omega_p = np.trapz(Int_top(R_array), R_array)/np.trapz(Int_bottom(R_array), R_array)
+  return Omega_p
+
+def timings(windows, logMbh, sma, ecc, incl, a, theta_d, theta_obs):
 
   #sma = float(sys.argv[1])
   #ecc = float(sys.argv[2])
@@ -11,8 +28,9 @@ def timings(windows, logMbh, sma, ecc, incl, a, theta_d, theta_obs, )
   #logMbh = float(sys.argv[5])
   #theta_obs = cp.array(float(sys.argv[6]))
   #theta_d = cp.radians(float(sys.argv[7]))
-  P_d = float(sys.argv[8])
+  #P_d = float(sys.argv[8])
   #windows = np.array(ast.literal_eval(sys.argv[9]), ndmin=2, dtype=np.float64)
+  
   timing_file = sys.argv[10]
   window_file = sys.argv[11]
   error_file = sys.argv[12]
@@ -28,6 +46,14 @@ def timings(windows, logMbh, sma, ecc, incl, a, theta_d, theta_obs, )
   Mbh = cp.array(10**logMbh) * Msun
   c = 2.998e10 # cm/s
   t_g = cp.array(G * Mbh / c**3)
+
+  # Lense-Thirring precession period
+	Omega_p = lense_thirring_prec_freq(10**logMbh, a, 1.85):
+  T_prec = 1/Omega_p
+  # EMRI orbital period
+  T_orb = 2*np.pi*np.sqrt(a_in**3/(G*M0))
+  # disc precession period as multiple of T_orb
+  P_d = T_prec/T_orb
 
   np.savetxt(window_file, windows)
   t, r, (x, y, z), lambd, P_orb = trajectory(windows, np.array([logMbh]), np.array([sma]), np.array([ecc]), np.array([incl]), np.array([a]), np.array([phi_r0]), np.array([phi_theta0]), np.array([phi_phi0]), dt)
