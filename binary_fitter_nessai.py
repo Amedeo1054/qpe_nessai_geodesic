@@ -7,6 +7,8 @@ from collections import OrderedDict
 
 from binary_integration import integration
 
+from generate_timings import timings
+
 import inspect
 
 try:
@@ -120,7 +122,7 @@ class nessai_wrapper(Model):
         #                p_dict["theta_obs"],
         #                p_dict["phi_obs"])
 
-        t_p = integration(p_dict["m1"],
+        t_p = timings(p_dict["m1"],
                           p_dict["sma"],
                           p_dict["ecc"],
                           p_dict["inc"], 
