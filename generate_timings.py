@@ -1,16 +1,18 @@
 import numpy as np, cupy as cp, os, sys, ast
 import kerrgeopy as kg
+from pn_trajectory import trajectory
 
+def timings(windows, logMbh, sma, ecc, incl, a, theta_d, theta_obs, )
 
-sma = float(sys.argv[1])
-ecc = float(sys.argv[2])
-incl = float(sys.argv[3])
-a = float(sys.argv[4])
-logMbh = float(sys.argv[5])
-theta_obs = cp.array(float(sys.argv[6]))
-theta_d = cp.radians(float(sys.argv[7]))
+#sma = float(sys.argv[1])
+#ecc = float(sys.argv[2])
+#incl = float(sys.argv[3])
+#a = float(sys.argv[4])
+#logMbh = float(sys.argv[5])
+#theta_obs = cp.array(float(sys.argv[6]))
+#theta_d = cp.radians(float(sys.argv[7]))
 P_d = float(sys.argv[8])
-windows = np.array(ast.literal_eval(sys.argv[9]), ndmin=2, dtype=np.float64)
+#windows = np.array(ast.literal_eval(sys.argv[9]), ndmin=2, dtype=np.float64)
 timing_file = sys.argv[10]
 window_file = sys.argv[11]
 error_file = sys.argv[12]
@@ -28,7 +30,6 @@ c = 2.998e10 # cm/s
 t_g = cp.array(G * Mbh / c**3)
 
 np.savetxt(window_file, windows)
-from pn_trajectory import trajectory
 t, r, (x, y, z), lambd, P_orb = trajectory(windows, np.array([logMbh]), np.array([sma]), np.array([ecc]), np.array([incl]), np.array([a]), np.array([phi_r0]), np.array([phi_theta0]), np.array([phi_phi0]), dt)
 P_d *= P_orb[0]
 
