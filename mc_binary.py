@@ -1,15 +1,12 @@
-#!/usr/bin/env python3
 import numpy as np
 import astropy.io.fits as fits
 import astropy.io.ascii as ascii
-import glob, os, shutil, warnings
-import string, gc, time, copy
 import argparse, datetime
 import matplotlib.pyplot as plt
-from mpi4py import MPI
-import pymultinest
-import binary_fitter_modified as fitter
+import binary_fitter_nessai as fitter
+import os
 import corner
+
 
 plt.rc('text', usetex=True)
 plt.rcParams['font.size'] = 20
@@ -37,125 +34,38 @@ if True:
 data = np.loadtxt(configpars["infile"],unpack=True)
 
 if configpars['dofit']:
+  
+    if configpars['solver']=='nessai':
+        print("Using nessai")
 
-   print("components",configpars['components'])
-   print("fixed_components",configpars['fixed_components'])
-
-   with fitter.als_fitter(data, configpars['components'], configpars['fixed_components'], debug= args.debug) as temp:
-
-      print("configpars",configpars['components'])
-
-      if configpars['solver']=='multinest':
-         print("Using multinest")
-         out_fmt = configpars['chaindir']+'/'+configpars['chainfmt']
-
-         if 'mnsettings' in configpars:
-            configsettings = configpars['mnsettings']
-            if 'nlive' in configsettings:
-               nlive = int(configsettings['nlive'])
-            else:
-               nlive = 1000
-            if 'samplingeff' in configsettings:
-               samplingeff = float(configsettings['samplingeff'])
-            else:
-               samplingeff = 0.3
-         else:
-            nlive = 300
-            samplingeff = 0.6#0.3
-
-         t0 = datetime.datetime.now()
-         pymultinest.run(temp.lnlhood_mn, temp._scale_cube_mn, temp.ndim, sampling_efficiency=samplingeff, resume=False, \
-               outputfiles_basename=out_fmt, verbose=True, multimodal=False, \
-               importance_nested_sampling=False, n_live_points=nlive, n_iter_before_update=100, \
-               evidence_tolerance=0.1)
-
-         t1 = datetime.datetime.now()
-         if MPI.COMM_WORLD.rank==0:
-            print('Execution time {}'.format(t1-t0))
-      
-      # TODO: add nessai options here, to be passed to the flow sampler.
-      if configpars['solver']=='nessai':
-         print("Using nessai")
-
-         # try importing the nessai bits 
-         try:
+        # try importing the nessai bits 
+        try:
             from nessai.flowsampler import FlowSampler
-            #TODO: add nessai to requirements. E.g. conda install conda-forge::nessai or pip install nessai>=0.13.2
-         except ImportError:
+        #TODO: add nessai to requirements. E.g. conda install conda-forge::nessai or pip install nessai>=0.13.2
+        except ImportError:
             raise ImportError("Nessai not installed. Please install nessai to use this functionality.")
-         
-         nessaispecs = configpars['nessaispecs']
-         # Set some sampling defaults
-         defaults = {'flow_config':None, 'checkpointing':True, 'nlive':10, 'n_pool':1, 'resume': True, 'seed':42, 'output': './'+configpars['chaindir']+'/'}
-         # Then use them together with nessaispecs from the cfg to create the nessai kwargs.
-         nessaikwargs = {}
-         for key in defaults: 
-            if key in nessaispecs:
-               nessaikwargs[key] = nessaispecs[key]
-            else:
-               nessaikwargs[key] = defaults[key]   
 
-         for key in ['nlive','n_pool','seed']:
+        nessaispecs = configpars['nessaispecs']
+        # Set some sampling defaults
+        defaults = {'flow_config':None, 'checkpointing':True, 'nlive':10, 'n_pool':1, 'resume': True, 'seed':42, 'output': './'+configpars['chaindir']+'/'}
+        # Then use them together with nessaispecs from the cfg to create the nessai kwargs.
+        nessaikwargs = {}
+        for key in defaults: 
+            if key in nessaispecs:
+                nessaikwargs[key] = nessaispecs[key]
+            else:
+                nessaikwargs[key] = defaults[key]   
+
+        for key in ['nlive','n_pool','seed']:
             nessaikwargs[key] = int(nessaikwargs[key])     
 
-         print("temp",temp)  
-         print(temp.components)
-         # Create the model object from temp and the nessai wrapper class 
-         nessaimodel = fitter.nessai_wrapper(temp)
-         print("nomi nessai",nessaimodel.names)
-         print("nessaikwargs",nessaikwargs)
-         
-         # Other nessai options are here:
-         # https://nessai.readthedocs.io/en/latest/autoapi/nessai/flowsampler/index.html#nessai.flowsampler.FlowSampler
-         
-         sampler = FlowSampler(model=nessaimodel, 
+        nessaimodel = fitter.nessai_wrapper(data, configpars['components'], configpars['fixed_components'])
+
+        sampler = FlowSampler(model=nessaimodel, 
                                importance_nested_sampler=True,
                                **nessaikwargs)
-         # Now run.
-         t0 = datetime.datetime.now()
-         sampler.run()
-         t1 = datetime.datetime.now()
-         print('Execution time {}'.format(t1-t0))
-
-if configpars['solver'] == 'nessai':
-   # TODO: Don't do any postprocessing for now, to be integrated later. Nessai produces automatically quite a lot of files.
-   pass
-else:
-   if configpars['doplot']:
-
-      #This can only be one on one core....
-      with fitter.als_fitter(data,configpars['components'], configpars['fixed_components'], debug= args.debug) as temp:
-      
-         out_fmt = configpars['chaindir']+'/'+configpars['chainfmt']
-         out_plot = configpars['plotdir']+'/'+configpars['chainfmt']
-
-         lab = [r"{:}".format(configpars["labels"][a]) for a in configpars["labels"]]
-         print("labels:",lab)
-
-         a = pymultinest.Analyzer(n_params=temp.ndim, outputfiles_basename=out_fmt)
-         values = a.get_equal_weighted_posterior()
-
-         stat = a.get_stats()
-
-         lnz, dlnz = stat['global evidence'], stat['global evidence error']
-         print('  Nested Sampling Ln(z):   {0:6.3f}'.format(lnz))
-
-         # meds  = np.percentile(values, 50, axis=0)
-         # percs = np.transpose(np.percentile(values, [16,50,84], axis=0))
-
-         best_fit = values[np.argmax(values[:,-1])]
-         best_fit = best_fit[:-1]
-         print("best_fit =",best_fit)
-
-         figure = corner.corner(values[:,:-1], 
-         labels=lab, \
-         quantiles=[0.16, 0.5, 0.84], \
-         show_titles=True, title_kwargs={"fontsize": 10})
-
-         index = np.random.choice(len(values),size=50)
-         values2 = values[index,:-1]
-
-         figure.savefig(out_plot+".pdf",bbox_inches="tight")
-
-         plt.show()
-
+        # Now run.
+        t0 = datetime.datetime.now()
+        sampler.run()
+        t1 = datetime.datetime.now()
+        print('Execution time {}'.format(t1-t0))
