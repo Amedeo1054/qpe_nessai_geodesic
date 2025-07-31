@@ -128,9 +128,7 @@ class nessai_wrapper(Model):
                           p_dict["inc"], 
                           p_dict["spin"],
                           p_dict["disc_inc"],
-                          p_dict["theta_obs"],
-                          #P_d
-                         )
+                          p_dict["theta_obs"])
 
                           
         t_p = t_p - p_dict["toff"]
