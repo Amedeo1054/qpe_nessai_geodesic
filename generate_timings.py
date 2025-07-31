@@ -11,7 +11,7 @@ theta_obs = cp.array(float(sys.argv[6]))
 theta_d = cp.radians(float(sys.argv[7]))
 P_d = float(sys.argv[8])
 windows = np.array(ast.literal_eval(sys.argv[9]), ndmin=2, dtype=np.float64)
-timing_file = sys.argv[10]
+Timing_file = sys.argv[10]
 window_file = sys.argv[11]
 error_file = sys.argv[12]
 phi_r0 = 0
