@@ -104,22 +104,33 @@ class nessai_wrapper(Model):
         #p_dict.update(self.fixed_components)
 
         # print(10**p_dict["m1"],10**p_dict["m2"],p_dict["sma"],p_dict["ecc"],p_dict["inc"], p_dict["arg_peri"], p_dict["asc_node"], p_dict["spin"],p_dict["disc_inc"],self.fixed_components["d_obs"],p_dict["theta_obs"],self.fixed_components["phi_obs"])
-        t_p = integration(10**p_dict["m1"],
-                        10**p_dict["m2"],
-                        p_dict["sma"],
-                        p_dict["ecc"],
-                        p_dict["inc"], 
-                        p_dict["arg_peri"], 
-                        p_dict["asc_node"],
-                        p_dict["true_anomaly"], 
-                        p_dict["spin"],
-                        p_dict["disc_inc"],
-                        p_dict["rdisc_min"],
-                        p_dict["rdisc_max"],
-                        p_dict["d_obs"],
-                        p_dict["theta_obs"],
-                        p_dict["phi_obs"])
+        #t_p = integration(10**p_dict["m1"],
+        #                10**p_dict["m2"],
+        #                p_dict["sma"],
+        #                p_dict["ecc"],
+        #                p_dict["inc"], 
+        #                p_dict["arg_peri"], 
+        #                p_dict["asc_node"],
+        #                p_dict["true_anomaly"], 
+        #                p_dict["spin"],
+        #                p_dict["disc_inc"],
+        #                p_dict["rdisc_min"],
+        #                p_dict["rdisc_max"],
+        #                p_dict["d_obs"],
+        #                p_dict["theta_obs"],
+        #                p_dict["phi_obs"])
 
+        t_p = integration(p_dict["m1"],
+                          p_dict["sma"],
+                          p_dict["ecc"],
+                          p_dict["inc"], 
+                          p_dict["spin"],
+                          p_dict["disc_inc"],
+                          p_dict["theta_obs"],
+                          #P_d
+                         )
+
+                          
         t_p = t_p - p_dict["toff"]
 
         t_p = t_p[t_p>0]
