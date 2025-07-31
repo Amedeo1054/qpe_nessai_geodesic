@@ -48,10 +48,12 @@ def timings(windows, logMbh, sma, ecc, incl, a, theta_d, theta_obs):
   t_g = cp.array(G * Mbh / c**3)
 
   # Lense-Thirring precession period
-	Omega_p = lense_thirring_prec_freq(10**logMbh, a, 1.85):
+  Omega_p = lense_thirring_prec_freq(Mbh, a, 1.85):
   T_prec = 1/Omega_p
   # EMRI orbital period
-  T_orb = 2*np.pi*np.sqrt(a_in**3/(G*M0))
+  R0 = G*Mbh/c**2
+  a_in = sma*R0
+  T_orb = 2*np.pi*np.sqrt(a_in**3/(G*Mbh))
   # disc precession period as multiple of T_orb
   P_d = T_prec/T_orb
 
