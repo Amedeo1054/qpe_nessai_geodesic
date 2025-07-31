@@ -122,13 +122,14 @@ class nessai_wrapper(Model):
         #                p_dict["theta_obs"],
         #                p_dict["phi_obs"])
 
-        t_p = timings(p_dict["m1"],
-                          p_dict["sma"],
-                          p_dict["ecc"],
-                          p_dict["inc"], 
-                          p_dict["spin"],
-                          p_dict["disc_inc"],
-                          p_dict["theta_obs"])
+        t_p = timings(self.data,
+                      p_dict["m1"],
+                      p_dict["sma"],
+                      p_dict["ecc"],
+                      p_dict["inc"], 
+                      p_dict["spin"],
+                      p_dict["disc_inc"],
+                      p_dict["theta_obs"])
 
                           
         t_p = t_p - p_dict["toff"]
