@@ -44,7 +44,15 @@ class nessai_wrapper(Model):
         for name in self.names:
             self.bounds[name] = [components[name][0], components[name][1]]
 
-        
+        self.t_selected = np.zeros(self.ndata)  #
+        # create array with initial indexes of each dataset   (!! works only if separation between datasets is larger than 1.7*(data[1]-data[0]) !!)
+        index_datasets = [0]
+        for i in range(1,self.ndata):
+            if data[0][i]-data[0][i-1] > 1.7*(data[0][1]-data[0][0]):
+              index_datasets.append(i)
+        index_datasets.append(self.ndata)
+        self.i_dset = np.array(index_datasets)
+
 
         # print("ndata",self.als_fitter.ndata)
         print("wrapper init")
