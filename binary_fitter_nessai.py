@@ -140,11 +140,22 @@ class nessai_wrapper(Model):
                       p_dict["theta_obs"])
 
                           
-        t_p = t_p - p_dict["toff"]
+        if len(t_p)<self.ndata:
+            return t_p
 
-        t_p = t_p[t_p>0]
+        t_p = t_p - t_p[0] + self.data[0][0]      # align first peak
+        t_p = t_p - p_dict["toff"]    # time shift
 
-        return t_p[:self.ndata]
+        if t_p[-(self.i_dset[-1]-self.i_dset[-2])] < self.data[0][-(self.i_dset[-1]-self.i_dset[-2])]:
+            return t_p[:self.ndata-2]
+
+        for ind, ind_next in zip(self.i_dset[:-1], self.i_dset[1:]):
+            j_closest = np.argmin( abs(t_p-self.data[0][ind]) )           # finds closest to 1st point of each dataset
+            self.t_selected[ind:ind_next] = t_p[j_closest:j_closest+ind_next-ind]   # array with selected points of the model (for each dataset)
+
+        return self.t_selected
+
+
 
 ###############################################################################################
 ###############################################################################################
