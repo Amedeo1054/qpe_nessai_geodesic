@@ -53,6 +53,11 @@ class nessai_wrapper(Model):
         index_datasets.append(self.ndata)
         self.i_dset = np.array(index_datasets)
 
+        hours_in_sec = 3600
+        self.windows = [[0.*hours_in_sec, 14.*hours_in_sec],
+                        [6.6400e8*hours_in_sec, 6.6414e8*hours_in_sec],
+                        [6.6655e8*hours_in_sec, 6.6662e8*hours_in_sec],
+                        [6.7572e8*hours_in_sec, 6.7586e8*hours_in_sec]]
 
         # print("ndata",self.als_fitter.ndata)
         print("wrapper init")
@@ -130,7 +135,7 @@ class nessai_wrapper(Model):
         #                p_dict["theta_obs"],
         #                p_dict["phi_obs"])
 
-        t_p = timings(self.data,
+        t_p = timings(self.windows,
                       p_dict["m1"],
                       p_dict["sma"],
                       p_dict["ecc"],
